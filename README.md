@@ -17,11 +17,13 @@ swift build
 
 ### 基本的な使い方
 
-自動生成される `input.swift` を編集 or 保存すると、AST が表示されます。
+引数なしで実行すると、カレントディレクトリに `input.swift` が作成されます（存在しない場合）。
 
 ```bash
 swift run swift-ast-dump
 ```
+
+`input.swift` を編集・保存するたびに AST が自動で更新されます。
 
 ![output](https://github.com/user-attachments/assets/404e029e-8919-495f-977a-ba383780af6d)
 
@@ -58,14 +60,9 @@ swift run swift-ast-dump -v 6 path/to/file.swift
 
 ## Xcode での実行
 
-Xcode からも実行できます。`input.swift` を編集・保存すると AST が更新されます。
+SwiftPM プロジェクトでは Xcode のワーキングディレクトリ設定に制限があり、正常に動作しない場合があります。
 
-### 注意
-
-- Xcode のコンソールはインタラクティブモードに対応していないため、キー操作はできません。終了は `Ctrl+C` で行います。
-- ANSI エスケープシーケンスに対応していないため、更新のたびに出力が追加されていきます。
-
-ターミナルから実行すると、代替スクリーンバッファを使用した TUI モードで動作します。
+ターミナルからの実行を推奨します。
 
 ## 出力例
 

@@ -1,11 +1,8 @@
 import Foundation
 
-let sourceFileURL = URL(fileURLWithPath: #filePath)
-let projectDir = sourceFileURL
-    .deletingLastPathComponent()
-    .deletingLastPathComponent()
+let currentDir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
 
-guard let config = App.parseArgs(projectDir: projectDir) else {
+guard let config = App.parseArgs(currentDir: currentDir) else {
     exit(0)
 }
 
