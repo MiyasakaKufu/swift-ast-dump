@@ -15,6 +15,9 @@ enum KeyInput: Equatable {
     case pageDown
     case scrollUp
     case scrollDown
+    case mouseDown(x: Int, y: Int)
+    case mouseDrag(x: Int, y: Int)
+    case mouseUp(x: Int, y: Int)
 }
 
 /// ターミナル制御を担当
@@ -24,6 +27,7 @@ struct Terminal {
     static let reset = "\u{001B}[0m"
     static let bold = "\u{001B}[1m"
     static let dim = "\u{001B}[2m"
+    static let inverse = "\u{001B}[7m"
     static let cyan = "\u{001B}[36m"
     static let green = "\u{001B}[32m"
 
@@ -34,8 +38,10 @@ struct Terminal {
     static let exitAlternateScreen = "\u{001B}[?1049l"
 
     // MARK: - Mouse Tracking
-    static let enableMouseTracking = "\u{001B}[?1000h\u{001B}[?1006h"
-    static let disableMouseTracking = "\u{001B}[?1000l\u{001B}[?1006l"
+    // 1002: Button-event tracking (press, release, drag with button held)
+    // 1006: SGR extended mode (for better coordinate handling)
+    static let enableMouseTracking = "\u{001B}[?1002h\u{001B}[?1006h"
+    static let disableMouseTracking = "\u{001B}[?1002l\u{001B}[?1006l"
 
     // MARK: - State
     nonisolated static let isInteractive = isatty(STDIN_FILENO) != 0
@@ -147,10 +153,16 @@ struct Terminal {
     private static func parseMouseEvent() -> KeyInput? {
         var buffer: [UInt8] = []
         var c: UInt8 = 0
+        var isRelease = false
 
         // M または m が来るまで読み取る
         while read(STDIN_FILENO, &c, 1) == 1 {
-            if c == Character("M").asciiValue || c == Character("m").asciiValue {
+            if c == Character("M").asciiValue {
+                isRelease = false
+                break
+            }
+            if c == Character("m").asciiValue {
+                isRelease = true
                 break
             }
             buffer.append(c)
@@ -160,7 +172,10 @@ struct Terminal {
         // Cb;Cx;Cy をパース
         let str = String(bytes: buffer, encoding: .ascii) ?? ""
         let parts = str.split(separator: ";")
-        guard parts.count >= 1, let cb = Int(parts[0]) else {
+        guard parts.count >= 3,
+              let cb = Int(parts[0]),
+              let cx = Int(parts[1]),
+              let cy = Int(parts[2]) else {
             return nil
         }
 
@@ -174,6 +189,19 @@ struct Terminal {
             }
         }
 
-        return nil  // その他のマウスイベントは無視
+        // 左ボタン (button 0) のみ処理
+        let button = cb & 3
+        guard button == 0 else { return nil }
+
+        // ドラッグ判定 (bit 5 = 32)
+        let isDrag = (cb & 32) != 0
+
+        if isRelease {
+            return .mouseUp(x: cx, y: cy)
+        } else if isDrag {
+            return .mouseDrag(x: cx, y: cy)
+        } else {
+            return .mouseDown(x: cx, y: cy)
+        }
     }
 }
