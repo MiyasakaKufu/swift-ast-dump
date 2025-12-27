@@ -2,6 +2,8 @@
 
 Swift ファイルの AST (抽象構文木) をダンプするツール。ファイル監視機能付きでホットリロードに対応。
 
+![output2](https://github.com/user-attachments/assets/12056541-7f5f-4316-8e8b-0a26766394c0)
+
 ## 必要環境
 
 - macOS 13+
@@ -13,30 +15,15 @@ Swift ファイルの AST (抽象構文木) をダンプするツール。ファ
 swift build
 ```
 
-## 使い方
-
-```
-Usage: swift-ast-dump [options] [file]
-
-Options:
-  -v, --version <5|6>  Swift language version for parsing
-  -h, --help           Show this help
-
-Examples:
-  swift-ast-dump                    # Watch input.swift
-  swift-ast-dump -v 6               # Parse as Swift 6
-  swift-ast-dump path/to/file.swift # Watch specific file
-```
-
 ### 基本的な使い方
 
-`input.swift` を編集して実行すると、AST がダンプされます。
+自動生成される `input.swift` を編集 or 保存すると、AST が表示されます。
 
 ```bash
 swift run swift-ast-dump
 ```
 
-ファイルを保存するたびに自動で更新されます。
+![output](https://github.com/user-attachments/assets/404e029e-8919-495f-977a-ba383780af6d)
 
 ### キー操作 (ターミナル)
 
