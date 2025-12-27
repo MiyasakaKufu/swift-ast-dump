@@ -204,7 +204,7 @@ extension App {
         let swiftVersion: Parser.SwiftVersion
     }
 
-    static func parseArgs(projectDir: URL) -> Config? {
+    static func parseArgs(currentDir: URL) -> Config? {
         var filePath: String?
         var swiftVersion: Parser.SwiftVersion = .v6
 
@@ -233,7 +233,7 @@ extension App {
             }
         }
 
-        let path = filePath ?? projectDir.appendingPathComponent("input.swift").path
+        let path = filePath ?? currentDir.appendingPathComponent("input.swift").path
         return Config(path: path, swiftVersion: swiftVersion)
     }
 
