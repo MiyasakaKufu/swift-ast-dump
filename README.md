@@ -71,9 +71,9 @@ swift run swift-ast-dump -v 6 path/to/file.swift
 
 ## Xcode での実行
 
-Xcode から実行すると Terminal.app が起動し、TUI モードで動作します。
+SwiftPM プロジェクトでは Xcode のワーキングディレクトリ設定に制限があり、正常に動作しない場合があります。
 
-カレントディレクトリはプロジェクトルートになるため、`input.swift` はプロジェクトルートに作成されます。
+ターミナルからの実行を推奨します。
 
 ## 出力例
 
