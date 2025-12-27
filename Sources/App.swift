@@ -11,6 +11,10 @@ final class App {
     private var scrollOffset: Int = 0
     private var contentLines: [String] = []
 
+    // テキスト選択
+    private let textSelection = TextSelection()
+    private var headerLineCount: Int = 0
+
     init(path: String, swiftVersion: Parser.SwiftVersion) {
         self.dumper = ASTDumper(path: path, swiftVersion: swiftVersion)
         self.watcher = FileWatcher(path: path)
@@ -76,6 +80,9 @@ final class App {
         let footerHeight = 1
         let contentHeight = height - headerLines.count - footerHeight - 1  // 1行は空行用
 
+        // ヘッダー行数を保存（マウス座標変換用）
+        headerLineCount = headerLines.count + 1  // +1 は空行分
+
         // ヘッダー表示
         for line in headerLines {
             print(line)
@@ -86,8 +93,13 @@ final class App {
         let startIndex = scrollOffset
         let endIndex = min(startIndex + contentHeight, contentLines.count)
 
+        let inverse = await Terminal.inverse
+        let reset = await Terminal.reset
+
         for i in startIndex..<endIndex {
-            print(contentLines[i])
+            let line = contentLines[i]
+            let highlightedLine = textSelection.applyHighlight(to: line, lineIndex: i, inverse: inverse, reset: reset)
+            print(highlightedLine)
         }
 
         // 空行で埋める
@@ -189,10 +201,53 @@ final class App {
                 scrollOffset = min(maxScroll, scrollOffset + 3)
                 return .needsRender
             }
+        case .mouseDown(let x, let y):
+            let (contentLine, col) = screenToContent(x: x, y: y)
+
+            // ヘッダー領域かチェック
+            let screenLine = y - 1
+            guard screenLine >= headerLineCount else {
+                textSelection.clear()
+                return .none
+            }
+
+            let result = textSelection.handleMouseDown(
+                contentLine: contentLine,
+                col: col,
+                contentLines: contentLines
+            )
+            return result == .selectionChanged ? .needsRender : .none
+
+        case .mouseDrag(let x, let y):
+            let (contentLine, col) = screenToContent(x: x, y: y)
+            let result = textSelection.handleMouseDrag(
+                contentLine: contentLine,
+                col: col,
+                contentLines: contentLines
+            )
+            return result == .selectionChanged ? .needsRender : .none
+
+        case .mouseUp(let x, let y):
+            let (contentLine, col) = screenToContent(x: x, y: y)
+            let result = textSelection.handleMouseUp(
+                contentLine: contentLine,
+                col: col,
+                contentLines: contentLines
+            )
+            return result == .selectionChanged ? .needsRender : .none
+
         default:
             break
         }
         return .none
+    }
+
+    /// 画面座標をコンテンツ座標に変換
+    private func screenToContent(x: Int, y: Int) -> (line: Int, col: Int) {
+        let screenLine = y - 1  // 1-indexed → 0-indexed
+        let contentLine = screenLine - headerLineCount + scrollOffset
+        let col = x - 1  // 1-indexed → 0-indexed
+        return (contentLine, col)
     }
 }
 
