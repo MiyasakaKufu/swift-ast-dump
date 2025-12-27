@@ -12,40 +12,38 @@ struct ASTDumper {
         self.swiftVersion = swiftVersion
     }
 
-    /// AST をダンプして表示
-    func dump() async {
-        await printHeader()
-
+    /// AST コンテンツを行の配列として取得
+    func getContent() -> [String] {
         do {
             let source = try String(contentsOfFile: path, encoding: .utf8)
             var parser = Parser(source, swiftVersion: swiftVersion)
             let tree = SourceFileSyntax.parse(from: &parser)
-            print(tree.debugDescription)
+            return tree.debugDescription.components(separatedBy: "\n")
         } catch {
-            fputs("Error: \(error.localizedDescription)\n", stderr)
+            return ["Error: \(error.localizedDescription)"]
         }
     }
 
-    private func printHeader() async {
-        await Terminal.clear()
-
+    /// ヘッダー行を取得
+    func getHeader() async -> [String] {
         let reset = await Terminal.reset
         let cyan = await Terminal.cyan
         let dim = await Terminal.dim
 
-        print("\(cyan)Watching:\(reset) \(path)")
+        var lines: [String] = []
+        lines.append("\(cyan)Watching:\(reset) \(path)")
 
         if Terminal.isInteractive {
             let v5 = await versionLabel(.v5)
             let v6 = await versionLabel(.v6)
-            print("\(cyan)Swift version:\(reset) \(v5) Swift 5  \(v6) Swift 6  \(dim)[q] quit\(reset)")
+            lines.append("\(cyan)Swift version:\(reset) \(v5) Swift 5  \(v6) Swift 6")
         } else {
             let label = swiftVersion == .v5 ? "Swift 5" : "Swift 6"
-            print("\(cyan)Swift version:\(reset) \(label)")
-            print("\(dim)(Ctrl+C to exit)\(reset)")
+            lines.append("\(cyan)Swift version:\(reset) \(label)")
+            lines.append("\(dim)(Ctrl+C to exit)\(reset)")
         }
 
-        print("")
+        return lines
     }
 
     private func versionLabel(_ v: Parser.SwiftVersion) async -> String {
@@ -62,5 +60,4 @@ struct ASTDumper {
             return "\(dim)[\(label)]\(reset)"
         }
     }
-
 }
